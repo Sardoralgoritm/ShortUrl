@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,27 +24,20 @@ builder.Services.AddIdentity<User, IdentityRole>()
        .AddDefaultTokenProviders();
 
 // Add Authentication
+var key = Encoding.ASCII.GetBytes(builder.Configuration["JWT:Secret"]);
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 })
-//Add JTW token
 .AddJwtBearer(options =>
 {
-    options.SaveToken = true;
-    options.RequireHttpsMetadata = false;
-    options.TokenValidationParameters = new TokenValidationParameters()
+    options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(builder.Configuration["JWT:Secret"])),
-
-        ValidateIssuer = true,
-        ValidIssuer = builder.Configuration["JWT:Issuer"],
-
-        ValidateAudience = true,
-        ValidAudience = builder.Configuration["JTW:Audience"]
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = false,
+        ValidateAudience = false
     };
 });
 
@@ -59,6 +53,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseRouting();
 
 app.UseAuthentication();
 app.UseAuthorization();

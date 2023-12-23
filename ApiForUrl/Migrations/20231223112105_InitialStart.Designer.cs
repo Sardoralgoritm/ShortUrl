@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ApiForUrl.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20231212192525_Initial")]
-    partial class Initial
+    [Migration("20231223112105_InitialStart")]
+    partial class InitialStart
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -37,15 +37,12 @@ namespace ApiForUrl.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("OrginalUrl")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ShortUrl")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")
-                        .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
@@ -75,11 +72,9 @@ namespace ApiForUrl.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("FirstName")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("LastName")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("LockoutEnabled")
@@ -266,8 +261,7 @@ namespace ApiForUrl.Migrations
                     b.HasOne("ApiForUrl.DataAccess.Entities.User", "User")
                         .WithMany("ShortUrls")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.ClientCascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.ClientCascade);
 
                     b.Navigation("User");
                 });

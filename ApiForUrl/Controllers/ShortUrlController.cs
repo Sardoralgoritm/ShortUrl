@@ -1,4 +1,6 @@
-﻿using ApiForUrl.DataAccess.Interfaces;
+﻿using ApiForUrl.DataAccess.Entities;
+using ApiForUrl.DataAccess.Interfaces;
+using ApiForUrl.DataAccess.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -18,9 +20,11 @@ public class ShortUrlController(IShortUrlInterface shortUrlInterface) : Controll
         return Ok(result.ShortUrl);
     }
 
-    [HttpGet("get")]
-    public async Task<IActionResult> Go()
+    [HttpGet("get/{url}")]
+    public async Task<IActionResult> GetUrl(string url)
     {
-        return Ok("Finally");
+        var urlModel = await shortUrlInterface.GetByShortUrl(url);
+        string orginalUrl = urlModel.OrginalUrl;
+        return Ok(orginalUrl);
     }
 }

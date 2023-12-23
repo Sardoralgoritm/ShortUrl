@@ -1,13 +1,12 @@
 ﻿using ApiForUrl.DataAccess;
 using ApiForUrl.DataAccess.Entities;
 using ApiForUrl.DataAccess.ViewModels;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
 
 namespace ApiForUrl.Controllers;
@@ -67,6 +66,7 @@ public class AuthenticationController(UserManager<User> user,
         if (userExists != null && await _userManager.CheckPasswordAsync(userExists, loginVM.Password))
         {
             var tokenValue = await GenerateJWTTokenAsync(userExists);
+            await _userManager.SetAuthenticationTokenAsync(userExists, "Men", "Token", tokenValue.Token);
             return Ok(tokenValue);
         }
 
@@ -75,25 +75,41 @@ public class AuthenticationController(UserManager<User> user,
 
     private async Task<AuthResultVM> GenerateJWTTokenAsync(User user)
     {
-        var authClaims = new List<Claim>()
+        //var authClaims = new List<Claim>()
+        //{
+        //    new Claim(ClaimTypes.Name, user.UserName),
+        //    new Claim(ClaimTypes.NameIdentifier, user.Id + Guid.NewGuid().ToString()),
+        //    new Claim(ClaimTypes.GivenName, user.UserName)
+        //};
+
+        //var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
+
+        //var token = new JwtSecurityToken(
+        //    issuer: _configuration["JWT:Issuer"],
+        //    audience: _configuration["JWT:Audience"],
+        //    expires: DateTime.UtcNow.AddDays(1),
+        //    claims: authClaims,
+        //    signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256));
+
+        //var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
+
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var key = Encoding.ASCII.GetBytes(_configuration["JWT:Secret"]); // Same key as used in authentication configuration
+
+        var tokenDescriptor = new SecurityTokenDescriptor
         {
-            new Claim(ClaimTypes.Name, user.UserName),
-            new Claim(ClaimTypes.NameIdentifier, user.Id),
-            new Claim(JwtRegisteredClaimNames.Email, user.Email),
-            new Claim(JwtRegisteredClaimNames.Sub, user.Email),
-            new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            Subject = new ClaimsIdentity(new Claim[]
+            {
+                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim(ClaimTypes.GivenName, user.NormalizedEmail),
+                new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString())
+            }),
+            Expires = DateTime.UtcNow.AddDays(1),
+            SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
         };
 
-        var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
-
-        var token = new JwtSecurityToken(
-            issuer: _configuration["JWT:Issuer"],
-            audience: _configuration["JWT:Audience"],
-            expires: DateTime.UtcNow.AddMinutes(1),
-            claims: authClaims,
-            signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256));
-
-        var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        var jwtToken = tokenHandler.WriteToken(token);
 
         var response = new AuthResultVM()
         {
