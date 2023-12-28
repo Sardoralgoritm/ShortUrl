@@ -9,7 +9,7 @@ namespace ApiForUrl.Controllers;
 
 [Route("api/[controller]")]
 [ApiController]
-[Authorize]
+//[Authorize]
 public class ShortUrlController(IShortUrlInterface shortUrlInterface) : ControllerBase
 {
     private readonly IShortUrlInterface shortUrlInterface = shortUrlInterface;

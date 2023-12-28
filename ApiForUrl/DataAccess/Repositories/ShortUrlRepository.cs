@@ -26,7 +26,7 @@ public class ShortUrlRepository(AppDbContext appDbContext) : IShortUrlInterface
             ShortUrlModel model = new ShortUrlModel()
             {
                 OrginalUrl = link,
-                ShortUrl = shortUrl,
+                ShortUrl = "https://brogrammers.fn1.uz/" + shortUrl,
                 UserId = "1"
             };
             _DbContext.shortUrlModels.Add(model);
@@ -41,7 +41,7 @@ public class ShortUrlRepository(AppDbContext appDbContext) : IShortUrlInterface
 
     public async Task<ShortUrlModel> GetByShortUrl(string link)
     {
-        string shortUrl = link.Split("%2F")[^1];
+        string shortUrl = link.Replace("%2F", "/");
         var url = await _DbContext.shortUrlModels.FirstOrDefaultAsync(x => x.ShortUrl == shortUrl);
         if (url != null)
         {
