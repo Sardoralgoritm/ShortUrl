@@ -4,11 +4,15 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ApiForUrl.DataAccess;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<User>(options)
+public class AppDbContext : IdentityDbContext<User>
 {
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    {
+        Database.EnsureCreated();
+    }
     public DbSet<ShortUrlModel> shortUrlModels {  get; set; }
 
-
+    
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.Entity<User>()
