@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
 
@@ -19,7 +20,7 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder
 
 //builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
-// Add Identity
+#region Add Identity
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
     options.Password.RequireDigit = false;
@@ -29,7 +30,9 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 }).AddEntityFrameworkStores<AppDbContext>()
   .AddDefaultTokenProviders();
 
-// Add Authentication
+#endregion
+
+#region Add Authentication
 var key = Encoding.ASCII.GetBytes(builder.Configuration["JWT:Secret"]);
 builder.Services.AddAuthentication(options =>
 {
@@ -46,6 +49,30 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = false
     };
 });
+
+#endregion
+
+# region Add Cors Configuration
+var allowOrigins = "AllowOrigins";
+builder.Services.AddCors(option =>
+{
+    option.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
+    });
+    option.AddPolicy("AllowHeaders", builder =>
+    {
+        builder.WithOrigins(allowOrigins)
+                .WithHeaders(HeaderNames.ContentType
+                , HeaderNames.Server
+                , HeaderNames.AccessControlAllowHeaders
+                , HeaderNames.AccessControlExposeHeaders
+                , "x-custom-header", "x-path", "x-record-in-use"
+                , HeaderNames.ContentDisposition);
+    });
+});
+
+#endregion
 
 builder.Services.AddTransient<IShortUrlInterface, ShortUrlRepository>();
 
