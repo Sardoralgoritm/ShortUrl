@@ -17,7 +17,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
-
+builder.Services.AddTransient<IShortUrlInterface, ShortUrlRepository>();
 //builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
 #region Add Identity
@@ -52,29 +52,22 @@ builder.Services.AddAuthentication(options =>
 
 #endregion
 
-# region Add Cors Configuration
-var allowOrigins = "AllowOrigins";
-builder.Services.AddCors(option =>
+#region Add Cors Configuration
+string cors = "AllowAll";
+
+builder.Services.AddCors(options =>
 {
-    option.AddPolicy("AllowAll", builder =>
-    {
-        builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-    });
-    option.AddPolicy("AllowHeaders", builder =>
-    {
-        builder.WithOrigins(allowOrigins)
-                .WithHeaders(HeaderNames.ContentType
-                , HeaderNames.Server
-                , HeaderNames.AccessControlAllowHeaders
-                , HeaderNames.AccessControlExposeHeaders
-                , "x-custom-header", "x-path", "x-record-in-use"
-                , HeaderNames.ContentDisposition);
-    });
+    options.AddPolicy(cors,
+               builder =>
+               {
+                   builder.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+               });
 });
 
 #endregion
 
-builder.Services.AddTransient<IShortUrlInterface, ShortUrlRepository>();
 
 
 var app = builder.Build();
