@@ -14,17 +14,52 @@ public class ShortUrlController(IShortUrlInterface shortUrlInterface) : Controll
 {
     private readonly IShortUrlInterface shortUrlInterface = shortUrlInterface;
     [HttpPost("create")]
-    public async Task<IActionResult> CreateUrl([FromBody]string link)
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> CreateUrl(AddViewModel viewModel)
     {
-        var result = await shortUrlInterface.CreateLinkAsync(link);
-        return Ok(result.ShortUrl);
+        try
+        {
+            var result = await shortUrlInterface.CreateLinkAsync(viewModel);
+            return Ok(result.ShortUrl);
+        }
+        catch(ArgumentNullException ex)
+        {
+            return NotFound(ex.Message);
+        }
     }
 
-    [HttpGet("get/{url}")]
-    public async Task<IActionResult> GetUrl(string url)
+    [HttpGet("get")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> GetUrl([FromQuery] ViewModel viewModel)
     {
-        var urlModel = await shortUrlInterface.GetByShortUrl(url);
-        string orginalUrl = urlModel.OrginalUrl;
-        return Ok(orginalUrl);
+        try
+        {
+            var urlModel = await shortUrlInterface.GetByShortUrl(viewModel.Link);
+            string orginalUrl = urlModel.OrginalUrl;
+            return Ok(orginalUrl);
+        }
+        catch(Exception ex)
+        {
+            return NotFound(ex.Message);
+        }
+    }
+
+    [HttpGet("get-users-url")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> GetUsersUrls([FromQuery] ViewModelForUserId viewModel)
+    {
+        try
+        {
+            var urls = await shortUrlInterface.GetUsersUrls(viewModel.UserId);
+            var result = urls.Select(i => (ShortUrlDto)i).ToList();
+            return Ok(result);
+        }
+        catch(ArgumentNullException ex)
+        {
+            return NotFound(ex.Message);
+        }
     }
 }

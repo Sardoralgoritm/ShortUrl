@@ -1,23 +1,32 @@
 ﻿using ApiForUrl.DataAccess.Entities;
 using ApiForUrl.DataAccess.Interfaces;
+using ApiForUrl.DataAccess.ViewModels;
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 
 namespace ApiForUrl.DataAccess.Repositories;
 
-public class ShortUrlRepository(AppDbContext appDbContext) : IShortUrlInterface
+public class ShortUrlRepository(AppDbContext appDbContext,
+                                UserManager<User> user) : IShortUrlInterface
 {
     private readonly AppDbContext _DbContext = appDbContext;
+    private readonly UserManager<User> _userManager = user;
 
-    public async Task<ShortUrlModel> CreateLinkAsync(string link)
+    public async Task<ShortUrlModel> CreateLinkAsync(AddViewModel addViewModel)
     {
-        var oldUrl = _DbContext.shortUrlModels.FirstOrDefault(x => x.OrginalUrl == link);
+        var oldUrl = _DbContext.shortUrlModels.FirstOrDefault(x => x.OrginalUrl == addViewModel.Link);
 
         if (oldUrl != null)
         {
             return oldUrl;
         }
-
+        var check = await _userManager.Users.FirstOrDefaultAsync(i => i.Id == addViewModel.UserId);
+        if (check == null)
+        {
+            throw new ArgumentNullException("User not found!");
+        }
         start:
         string shortUrl = GenerateUrl();
 
@@ -25,9 +34,10 @@ public class ShortUrlRepository(AppDbContext appDbContext) : IShortUrlInterface
         {
             ShortUrlModel model = new ShortUrlModel()
             {
-                OrginalUrl = link,
+                OrginalUrl = addViewModel.Link,
                 ShortUrl = "https://brogrammers.fn1.uz/" + shortUrl,
-                UserId = "1"
+                UserId = addViewModel.UserId,
+                User = null
             };
             _DbContext.shortUrlModels.Add(model);
             await _DbContext.SaveChangesAsync();
@@ -47,7 +57,17 @@ public class ShortUrlRepository(AppDbContext appDbContext) : IShortUrlInterface
         {
             return url;
         }
-        return new ShortUrlModel();
+        throw new Exception("This url not found!");
+    }
+    public async Task<List<ShortUrlModel>> GetUsersUrls(string userId)
+    {
+        var urls = await _DbContext.shortUrlModels.Where(i => i.UserId == userId).ToListAsync();
+        if (urls.Count() == 0)
+        {
+            throw new ArgumentNullException("Urls not found!");
+        }
+
+        return urls;
     }
 
     private string GenerateUrl()

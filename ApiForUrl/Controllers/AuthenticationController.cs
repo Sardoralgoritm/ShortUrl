@@ -75,26 +75,9 @@ public class AuthenticationController(UserManager<User> user,
 
     private async Task<AuthResultVM> GenerateJWTTokenAsync(User user)
     {
-        //var authClaims = new List<Claim>()
-        //{
-        //    new Claim(ClaimTypes.Name, user.UserName),
-        //    new Claim(ClaimTypes.NameIdentifier, user.Id + Guid.NewGuid().ToString()),
-        //    new Claim(ClaimTypes.GivenName, user.UserName)
-        //};
-
-        //var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
-
-        //var token = new JwtSecurityToken(
-        //    issuer: _configuration["JWT:Issuer"],
-        //    audience: _configuration["JWT:Audience"],
-        //    expires: DateTime.UtcNow.AddDays(1),
-        //    claims: authClaims,
-        //    signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256));
-
-        //var jwtToken = new JwtSecurityTokenHandler().WriteToken(token);
 
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_configuration["JWT:Secret"]); // Same key as used in authentication configuration
+        var key = Encoding.ASCII.GetBytes(_configuration["JWT:Secret"]);
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
@@ -113,6 +96,7 @@ public class AuthenticationController(UserManager<User> user,
 
         var response = new AuthResultVM()
         {
+            UserId = user.Id,
             Token = jwtToken,
             ExpiresAt = token.ValidTo
         };
